@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Excel Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* Reset & base */
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;display:flex;height:100vh;overflow:hidden;transition:background 0.3s,color 0.3s;background:#f5f7fa;color:#222;}
+body.dark{background:#12111b;color:#ddd;}
+
+/* Animations */
+@keyframes fadeInLeft{to{opacity:1;transform:translateX(0);}}
+@keyframes fadeInUp{to{opacity:1;transform:translateY(0);}}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg);}}
+@keyframes fadeInScale{0%{opacity:0;transform:scale(0.98);}100%{opacity:1;transform:scale(1);}}
+@keyframes fadeOutScale{0%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(0.98);}}
+@keyframes zoomShadow{0%{box-shadow:0 4px 20px rgba(0,0,0,0.1);}50%{box-shadow:0 8px 30px rgba(0,0,0,0.2);}100%{box-shadow:0 4px 20px rgba(0,0,0,0.1);}}
+@keyframes fadeSlideIn{0%{opacity:0;transform:translateY(20px);}100%{opacity:1;transform:translateY(0);}}
+@keyframes fadeSlideOut{0%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:translateY(20px);}}
+
+/* Sidebar */
+.sidebar{width:220px;background:#fff;border-right:1.5px solid #ccc;display:flex;flex-direction:column;padding:30px 20px;box-shadow:0 2px 10px rgba(0,0,0,0.08);opacity:0;transform:translateX(-20px);animation:fadeInLeft 0.7s forwards 0.3s;transition:background 0.3s,border-color 0.3s;}
+body.dark .sidebar{background:#1b1a2e;border-color:#333;box-shadow:0 2px 10px rgba(0,0,0,0.5);}
+#sidebarTitle{font-weight:700;font-size:1.5rem;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #bbb;color:#444;opacity:0;transform:translateX(-20px);animation:fadeInLeft 0.7s forwards 0.5s;transition:border-color 0.3s,color 0.3s;}
+body.dark #sidebarTitle{border-color:#555;color:#ddd;}
+.menu-item{color:#444;text-decoration:none;padding:14px 12px;margin-bottom:7px;border-radius:8px;cursor:pointer;font-weight:400;border:2px solid transparent;transition:all 0.25s;opacity:0;transform:translateX(-10px);animation:fadeInLeft 0.5s forwards;}
+.menu-item:nth-child(2){animation-delay:0.6s;}
+.menu-item:nth-child(3){animation-delay:0.75s;}
+.menu-item:nth-child(4){animation-delay:0.9s;}
+.menu-item:hover,.menu-item:focus{background:#e6e9f0;font-weight:700;outline:none;}
+body.dark .menu-item{color:#ccc;}
+body.dark .menu-item:hover,.menu-item:focus{background:#33345e;color:#eee;}
+.menu-item.selected{background:#dde1eb;border-color:#555;font-weight:700;color:#111;}
+body.dark .menu-item.selected{background:#3a3a5c;border-color:#aaa;color:#fff;}
+.sidebar-footer{margin-top:auto;border-top:1.5px solid #bbb;padding-top:12px;font-size:0.9rem;color:#666;text-align:center;opacity:0;transform:translateX(-20px);animation:fadeInLeft 0.7s forwards 1.1s;}
+body.dark .sidebar-footer{border-color:#555;color:#aaa;}
+
+/* Main */
+.main{flex:1;padding:40px;display:flex;flex-direction:column;position:relative;overflow:hidden;}
+#headerRow{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;opacity:0;transform:translateY(-20px);animation:fadeInUp 0.7s forwards 0.3s;}
+#welcomeText{font-size:2rem;font-weight:700;transition:color 0.3s;}
+body.dark #welcomeText{color:#ddd;}
+#welcomeSubtext{font-size:1rem;font-weight:400;margin-bottom:32px;opacity:0;transform:translateY(-20px);animation:fadeInUp 0.7s forwards 0.5s;transition:color 0.3s;}
+body.dark #welcomeSubtext{color:#aaa;}
+#exitButton{background:transparent;border:none;cursor:pointer;padding:6px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:background 0.3s;opacity:0;transform:translateY(-20px);animation:fadeInUp 0.7s forwards 0.4s;}
+#exitButton:hover{background:#c0392b;}
+#exitButton svg{width:20px;height:20px;fill:#444;transition:fill 0.3s;}
+#exitButton:hover svg{fill:#fff;}
+body.dark #exitButton svg{fill:#ccc;}
+body.dark #exitButton:hover svg{fill:#fff;}
+
+/* Dark mode toggle switch */
+.switch{position:relative;display:inline-block;width:50px;height:26px;margin-left:16px;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ccc;transition:0.4s;border-radius:34px;}
+.slider:before{position:absolute;content:"";height:20px;width:20px;left:3px;bottom:3px;background:white;transition:0.4s;border-radius:50%;}
+input:checked + .slider{background:#666;}
+input:checked + .slider:before{transform:translateX(24px);}
+body.dark .slider{background:#444;}
+body.dark input:checked + .slider{background:#eee;}
+
+/* Iframe wrapper */
+#iframeContainer{flex:1;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.1);overflow:hidden;border:1.5px solid #ccc;background:#fff;position:relative;transition:background 0.3s,border-color 0.3s;}
+body.dark #iframeContainer{background:#222038;border-color:#333;box-shadow:0 4px 20px rgba(0,0,0,0.6);}
+#iframeWrapper{width:100%;height:100%;position:relative;}
+#excelIframe{width:100%;height:100%;border:none;opacity:0;transition:opacity 0.35s;}
+#loadingSpinner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:5px solid #ccc;border-top:5px solid #444;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;z-index:5;display:none;}
+body.dark #loadingSpinner{border:5px solid #666;border-top:5px solid #ddd;}
+
+/* Login */
+#loginScreen{position:absolute;inset:0;background:#f5f7fa;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:10;padding:30px;border:1.5px solid #ccc;border-radius:12px;box-shadow:0 6px 30px rgba(0,0,0,0.1);transition:background 0.3s,border-color 0.3s,opacity 0.3s,transform 0.3s;}
+body.dark #loginScreen{background:#1b1a2e;border-color:#333;box-shadow:0 6px 30px rgba(0,0,0,0.6);}
+#loginScreen h2{margin-bottom:25px;font-weight:700;font-size:1.6rem;color:#222;transition:color 0.3s;}
+body.dark #loginScreen h2{color:#ddd;}
+#loginScreen input{width:280px;padding:12px 15px;margin-bottom:15px;font-size:1rem;border-radius:8px;border:1.5px solid #bbb;outline:none;font-weight:500;color:#222;background:#fff;transition:border 0.3s,color 0.3s,background 0.3s;}
+body.dark #loginScreen input{border-color:#555;background:#2a2a44;color:#ddd;}
+#loginScreen button{width:280px;padding:12px 0;font-weight:700;font-size:1.1rem;border-radius:8px;border:none;background:#444;color:#fff;cursor:pointer;transition:background 0.3s;}
+#loginScreen button:hover{background:#222;}
+#error{margin-top:8px;color:#c0392b;font-weight:600;min-height:1.2em;transition:color 0.3s;}
+body.dark #error{color:#ff7b7b;}
+</style>
+</head>
+<body>
+
+<nav class="sidebar" aria-label="Navigation menu">
+  <div id="sidebarTitle">Overview</div>
+  <a href="#" class="menu-item selected" data-title="Overview" data-src="https://docs.google.com/spreadsheets/d/e/2PACX-1vS864Pm5NjmJNimoFXXBhY1ArUgivmwu8d2yzx0nkyxi8rv-zBP-qRq_7MQFA1V6w/pubhtml?widget=true&headers=false">Overview</a>
+  <a href="#" class="menu-item" data-title="Sheet 1" data-src="https://docs.google.com/spreadsheets/d/e/2PACX-1vS864Pm5NjmJNimoFXXBhY1ArUgivmwu8d2yzx0nkyxi8rv-zBP-qRq_7MQFA1V6w/pubhtml?widget=true&headers=false#gid=123456">Sheet 1</a>
+  <a href="#" class="menu-item" data-title="Sheet 2" data-src="https://docs.google.com/spreadsheets/d/e/2PACX-1vS864Pm5NjmJNimoFXXBhY1ArUgivmwu8d2yzx0nkyxi8rv-zBP-qRq_7MQFA1V6w/pubhtml?widget=true&headers=false#gid=654321">Sheet 2</a>
+  <div class="sidebar-footer">Version 1.0.0</div>
+</nav>
+
+<main class="main" id="mainContent" style="display:none;">
+  <div id="headerRow">
+    <div style="display:flex;align-items:center;">
+      <div id="welcomeText"></div>
+      <label class="switch">
+        <input type="checkbox" id="darkModeToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <button id="exitButton" title="Log Out">
+      <svg viewBox="0 0 24 24"><path d="M16 13v-2H7V8l-5 4 5 4v-3zM19 3h-7v2h7v14h-7v2h7a2 2 0 002-2V5a2 2 0 00-2-2z"/></svg>
+    </button>
+  </div>
+  <div id="welcomeSubtext">Here's your latest data.</div>
+  <div id="iframeContainer">
+    <div id="iframeWrapper">
+      <iframe id="excelIframe"></iframe>
+    </div>
+    <div id="loadingSpinner" role="status" aria-live="polite" aria-label="Loading content"></div>
+  </div>
+</main>
+
+<div id="loginScreen">
+  <h2>Welcome! Please Log In</h2>
+  <input type="text" id="nameInput" placeholder="Enter your name" autocomplete="off">
+  <input type="password" id="passwordInput" placeholder="Enter password" autocomplete="off">
+  <button id="loginButton">Log In</button>
+  <div id="error"></div>
+</div>
+
+<script>
+const correctPassword="mypassword";
+
+const loginScreen=document.getElementById('loginScreen');
+const mainContent=document.getElementById('mainContent');
+const welcomeText=document.getElementById('welcomeText');
+const welcomeSubtext=document.getElementById('welcomeSubtext');
+const nameInput=document.getElementById('nameInput');
+const passwordInput=document.getElementById('passwordInput');
+const loginButton=document.getElementById('loginButton');
+const errorDiv=document.getElementById('error');
+const sidebarTitle=document.getElementById('sidebarTitle');
+const menuItems=document.querySelectorAll('.menu-item');
+const excelIframe=document.getElementById('excelIframe');
+const iframeWrapper=document.getElementById('iframeWrapper');
+const exitButton=document.getElementById('exitButton');
+const loadingSpinner=document.getElementById('loadingSpinner');
+const darkModeToggle=document.getElementById('darkModeToggle');
+
+function getGreeting(name){
+  const hour=new Date().getHours();
+  if(hour<12) return `Good morning, ${name}.`;
+  if(hour<18) return `Good afternoon, ${name}.`;
+  return `Good evening, ${name}.`;
+}
+function formatLoginTime(date){
+  return date.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'});
+}
+
+function setSelectedMenu(item){
+  menuItems.forEach(i=>i.classList.remove('selected'));
+  item.classList.add('selected');
+  sidebarTitle.textContent=item.dataset.title||"Overview";
+  iframeWrapper.style.animation="fadeOutScale 0.25s forwards";
+  loadingSpinner.style.display="block";
+  setTimeout(()=>{ excelIframe.src=item.dataset.src; },250);
+}
+
+excelIframe.addEventListener('load',()=>{
+  loadingSpinner.style.display="none";
+  excelIframe.style.opacity=0;
+  setTimeout(()=>{ excelIframe.style.opacity=1; iframeWrapper.style.animation="fadeInScale 0.35s forwards, zoomShadow 0.5s"; },50);
+  localStorage.setItem('lastSheet',excelIframe.src);
+});
+
+function login(name){
+  loginScreen.style.display="none";
+  mainContent.style.display="flex";
+  welcomeText.textContent=getGreeting(name);
+  welcomeSubtext.textContent=`Last login: ${formatLoginTime(new Date())}`;
+  localStorage.setItem('loggedIn',name);
+  const lastSheet=localStorage.getItem('lastSheet');
+  const defaultMenu=lastSheet?Array.from(menuItems).find(m=>m.dataset.src===lastSheet):menuItems[0];
+  setSelectedMenu(defaultMenu);
+  defaultMenu.focus();
+}
+
+loginButton.addEventListener('click',()=>{
+  const name=nameInput.value.trim();
+  const password=passwordInput.value;
+  if(!name){ errorDiv.textContent="Please enter your name."; return; }
+  if(!password){ errorDiv.textContent="Please enter your password."; return; }
+  if(password!==correctPassword){ errorDiv.textContent="Incorrect password."; return; }
+  errorDiv.textContent="";
+  login(name);
+  nameInput.value=""; passwordInput.value="";
+});
+
+exitButton.addEventListener('click',()=>{
+  loginScreen.style.display="flex";
+  mainContent.style.display="none";
+  localStorage.removeItem('loggedIn');
+  welcomeText.textContent="";
+  welcomeSubtext.textContent="Here's your latest data.";
+});
+
+darkModeToggle.addEventListener('change',()=>{
+  document.body.classList.toggle('dark',darkModeToggle.checked);
+  localStorage.setItem('darkMode',darkModeToggle.checked);
+});
+
+menuItems.forEach(item=>{
+  item.addEventListener('click',e=>{ e.preventDefault(); if(!item.classList.contains('selected')) setSelectedMenu(item); });
+  item.addEventListener('keydown',e=>{
+    const idx=Array.from(menuItems).indexOf(item);
+    if(e.key==="ArrowDown"){ e.preventDefault(); menuItems[(idx+1)%menuItems.length].focus(); }
+    if(e.key==="ArrowUp"){ e.preventDefault(); menuItems[(idx-1+menuItems.length)%menuItems.length].focus(); }
+    if(e.key==="Enter"||e.key===" "){ e.preventDefault(); setSelectedMenu(item); }
+  });
+});
+
+window.addEventListener('load',()=>{
+  const darkMode=localStorage.getItem('darkMode')==='true';
+  document.body.classList.toggle('dark',darkMode);
+  darkModeToggle.checked=darkMode;
+  const savedName=localStorage.getItem('loggedIn');
+  if(savedName){ login(savedName); }
+});
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
